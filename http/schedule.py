@@ -7,6 +7,9 @@ import itertools
 
 DATA_LIMIT = 5000
 
+def parse_time_to_min(h, m):
+    return int(h) * 60 + int(m)
+
 class Row(dict):
     def __init__(self, *E, **F):
         dict.__init__(self, *E, **F)
@@ -14,9 +17,16 @@ class Row(dict):
         return self[name]
 
 def schedule(dbname, semester, avoid, 
-    room=None, weekday=None, campus=None, count=None, flex=None, cap=None):
+    room=None, weekday=None, campus=None, count=None, flex=None, cap=None,
+    after=None, before=None, debug=False):
 
-    avoid = parse_avoid(avoid)
+    if before:
+        before = parse_time_to_min(*before.split(":", 1))
+
+    if after:
+        after = parse_time_to_min(*after.split(":", 1))
+
+    avoid = parse_avoid(avoid) if avoid else parse_avoid("")
 
     db = sqlite3.connect(dbname)
     c = db.cursor()
@@ -70,7 +80,7 @@ def schedule(dbname, semester, avoid,
 
     if flex:
         sql += " and flex >= ?"
-        param.append(flex)
+        param.append(int(flex))
 
     if cap:
         sql += " and capacity >= ?"
@@ -79,8 +89,9 @@ def schedule(dbname, semester, avoid,
     sql += " order by semester, weekday_o, starthour, startmin, room"
     sql += " limit %s" % DATA_LIMIT
 
-    print "avoid:", avoid
-    print "sql:", sql, param
+    if debug:
+        print "avoid:", avoid
+        print "sql:", sql, param
 
     c.execute(sql, param)
 
@@ -113,6 +124,17 @@ def schedule(dbname, semester, avoid,
             y['endmin'] = I[y.j][3]
             y['start'] = "%.2d:%.2d" % (y.starthour, y.startmin)
             y['end'] = "%.2d:%.2d" % (y.endhour, y.endmin)
+
+            if after:
+                y_start = parse_time_to_min(y.starthour, y.startmin)
+                if not (y_start >= after):
+                    continue
+
+            if before:
+                y_end = parse_time_to_min(y.endhour, y.endmin)
+                if not (y_end <= before):
+                    continue
+
             feasible_answer.append(y)
 
     db.close()
@@ -143,7 +165,6 @@ def format_answer(answer):
 
 def parse_avoid(avoid):
     result = []
-    print "parse_avoid", avoid
     for x in avoid:
         m = re.match(r'([A-Z]+)(\d+.*)', x.upper())
         if m:
@@ -227,6 +248,11 @@ if __name__ == '__main__':
     p.add_argument('--weekday', dest='weekday')
     p.add_argument('--campus', dest='campus')
     p.add_argument('--duration', dest='duration')
+    p.add_argument('--before', dest='before')
+    p.add_argument('--after', dest='after')
+    p.add_argument('--flex', dest='flex')
+    p.add_argument('--debug', dest='debug', action='store_true', default=False)
+
     args = p.parse_args()
     avoid = parse_avoid(args.avoid.split(","))
 
@@ -247,7 +273,11 @@ if __name__ == '__main__':
         room=args.room,
         campus=args.campus,
         weekday=args.weekday,
-        count=count)
+        before=args.before,
+        after=args.after,
+        count=count,
+        flex=args.flex,
+        debug=args.debug)
 
     if len(answer) > DATA_LIMIT:
         print "Too many to show: %d" % len(answer)
