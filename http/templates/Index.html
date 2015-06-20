@@ -1,0 +1,65 @@
+<html ng-app="app">
+    <head>
+    <link rel='stylesheet' href="/static/bootstrap.css">
+    <link rel='stylesheet' href="/static/style.css">
+    <script src="/static/jquery.min.js"></script>
+    <script src="/static/angular.min.js"></script>
+    </head>
+    <body class="container" ng-controller="C">
+        <h1>Scheduling Helper</h1>
+        <h2>based on mycampus data as of 
+            <span id="version" class="alert alert-warning">unknown</span>
+        </h2>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <a href="/free" class="btn btn-default btn-lg">
+                    Search for free slots
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="/search" class="btn btn-default btn-lg">
+                    Search for schedules
+                </a>
+            </div>
+        </div>
+        <hr>
+        <div class="well">
+        This search engine is a community service.  The service provider
+        assume any responsibility, nor does it provide any guarantee in the
+        search quality.
+        </div>
+    </body>
+    <script>
+        var app = angular.module('app', [])
+        app.controller('C', function($scope, $window) {
+            $scope.q = {};
+            $scope.a = [];
+
+            $scope.Refresh = function() {
+                message("Loading...");
+                $.getJSON("/free", $scope.q, function(reply) {
+                    if(reply.error) {
+                        message(reply.error);
+                    } else {
+                        message("Found " + reply.total + " slots in " + reply.duration + " seconds");
+                        $scope.$apply(function() {
+                            $scope.a = reply.data;
+                        });
+                    }
+                });
+            }
+
+            $window.$scope = $scope;
+        });
+
+        function message(msg) {
+            $("#message").text(msg);
+        }
+        $(function() {
+            $.get("/q/info", function(data) {
+                $("#version").text(data.version)
+            });
+        });
+    </script>
+</html>

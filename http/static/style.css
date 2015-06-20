@@ -1,0 +1,9 @@
+#message {
+    position: fixed;
+    bottom: 0;
+    right: 20px;
+    text-align: center;
+    color: #008;
+    font-size: 20pt;
+    font-weight: bold;
+}

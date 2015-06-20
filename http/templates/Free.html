@@ -1,0 +1,100 @@
+<html ng-app="app">
+    <head>
+    <link rel='stylesheet' href="/static/bootstrap.css">
+    <link rel='stylesheet' href="/static/style.css">
+    <script src="/static/jquery.min.js"></script>
+    <script src="/static/angular.min.js"></script>
+    </head>
+    <body class="container" ng-controller="C">
+        <h3>
+            <a href="/" class="btn btn-default">Back</a>
+            Scheduling Helper: free slots
+        </h3>
+        <div class="row">
+            <div class="col-md-3">
+                <form role="form">
+                  <div class="form-group">
+                    <label>Semester</label>
+                    <input ng-model="q.semester" class="form-control" type="text" placeholder="e.g.: 201309">
+                  </div>
+                  <div class="form-group">
+                    <label>Avoid Courses</label>
+                    <input ng-model="q.avoid" type="text" class="form-control" placeholder="e.g.: CSCI3030U,ENGR400U">
+                  </div>
+                  <div class="form-group">
+                    <label>Days</label>
+                    <input ng-model="q.weekday" type="text" class="form-control" placeholder="e.g.: MWF">
+                  </div>
+                  <div class="form-group">
+                    <label>Room</label>
+                    <input ng-model="q.room" type="text" class="form-control" placeholder="e.g.: UA">
+                  </div>
+                  <!-- <div class="form-group">
+                    <label>Campus</label>
+                    <input ng-model="q.campus" type="text" class="form-control" placeholder="Only north campus supported" disabled>
+                  </div> -->
+                  <div class="form-group">
+                    <label>Capacity</label>
+                    <input ng-model="q.cap" type="text" class="form-control" placeholder="number">
+                  </div>
+                  <div class="form-group">
+                    <label>Flexibility</label>
+                    <input ng-model="q.flex" type="text" class="form-control" placeholder="number">
+                  </div>
+                  <div class="form-group">
+                    <label>Duration</label>
+                    <input ng-model="q.duration" type="text" class="form-control" placeholder="number of 30-min">
+                  </div>
+                  <button type="submit" class="btn btn-default" ng-click="Refresh()">Submit</button>
+                </form>
+            </div>
+            <div class="col-md-9">
+                <table class="table table-striped">
+                    <tr>
+                        <th>Weekday</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Room</th>
+                        <th>Capacity</th>
+                        <th>Diversity</th>
+                    <tr ng-repeat="row in a">
+                        <td ng-bind=row.weekday></td>
+                        <td ng-bind=row.start></td>
+                        <td ng-bind=row.end></td>
+                        <td ng-bind=row.room></td>
+                        <td ng-bind=row.capacity></td>
+                        <td ng-bind=row.flex></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div id="message"></div>
+    </body>
+    <script>
+        var app = angular.module('app', [])
+        app.controller('C', function($scope, $window) {
+            $scope.q = {};
+            $scope.a = [];
+
+            $scope.Refresh = function() {
+                message("Loading...");
+                $.getJSON("/q/free", $scope.q, function(reply) {
+                    if(reply.error) {
+                        message(reply.error + " But took " + reply.duration + " seconds.");
+                    } else {
+                        message("Found " + reply.total + " slots in " + reply.duration + " seconds." + (reply.message ?  " " + reply.message : ""));
+                        $scope.$apply(function() {
+                            $scope.a = reply.data;
+                        });
+                    }
+                });
+            }
+
+            $window.$scope = $scope;
+        });
+
+        function message(msg) {
+            $("#message").text(msg);
+        }
+    </script>
+</html>
