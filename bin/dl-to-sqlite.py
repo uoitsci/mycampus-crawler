@@ -68,7 +68,8 @@ def download(semester, subjs):
     if not subjs: subjs = all_subjs
     subj = "&".join('sel_subj=%s' % x for x in subjs)
 
-    url = "https://ssbp.mycampus.ca/prod/bwckschd.p_get_crse_unsec"
+    # url = "https://ssbp.mycampus.ca/prod/bwckschd.p_get_crse_unsec"
+    url = "https://ssbp.mycampus.ca/prod_uoit/bwckschd.p_get_crse_unsec"
     formdata = """
         TRM=U&term_in=%s&sel_subj=dummy&sel_day=dummy
         &sel_schd=dummy&sel_insm=dummy&sel_camp=dummy
@@ -83,7 +84,7 @@ def download(semester, subjs):
     formdata = "".join([x.strip() for x in formdata.split("\n")]).strip()
 
     r = requests.post(url, data=formdata)
-    return BeautifulSoup(r.text)
+    return BeautifulSoup(r.text, 'lxml')
 
 def next_sibling(el, name):
     for x in el.next_siblings:
