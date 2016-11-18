@@ -164,11 +164,14 @@ def format_answer(answer):
     return "\n".join(lines)
 
 def parse_avoid(avoid):
+    print "parse_avoid", avoid
     result = []
-    for x in avoid:
-        m = re.match(r'([A-Z]+)(\d+.*)', x.upper())
+    for x in avoid.split(","):
+        m = re.match(r'([A-Z]+)\s*(\d+)', x.upper())
         if m:
-            result.append('%s %s' % (m.group(1).strip(), m.group(2).strip()))
+            result.append('%s %sU' % (m.group(1).strip(), m.group(2).strip()))
+
+    print "Result:", result
     return result
 
 def search(dbname, semester, search):
@@ -254,7 +257,7 @@ if __name__ == '__main__':
     p.add_argument('--debug', dest='debug', action='store_true', default=False)
 
     args = p.parse_args()
-    avoid = parse_avoid(args.avoid.split(","))
+    avoid_string = args.avoid if args.avoid else ""
 
     if not args.dbname or not args.semester:
         p.print_usage()
@@ -269,7 +272,7 @@ if __name__ == '__main__':
     answer = schedule(
         dbname = args.dbname, 
         semester = args.semester, 
-        avoid = avoid, 
+        avoid = avoid_string, 
         room=args.room,
         campus=args.campus,
         weekday=args.weekday,

@@ -24,7 +24,7 @@ def search():
 @app.route("/q/free")
 def QueryFree():
     semester = request.args.get('semester', None)
-    avoid = re.sub(r'\s+', '', request.args.get('avoid', ''))
+    avoid = request.args.get('avoid', '')
     room = request.args.get('room', '')
     campus = request.args.get('campus', '')
     weekday = request.args.get('weekday', '')
@@ -41,7 +41,7 @@ def QueryFree():
         })
 
     try:
-        duration = int(duration)
+        duration = int(float(duration) * 2)
         flex = int(flex)
         cap = int(cap)
     except:
