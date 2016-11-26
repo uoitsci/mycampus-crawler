@@ -4,6 +4,7 @@
 
 - Beautifulsoup 4
 - Requests
+- *IMPORTANT* requires lxml == 3.4.4
 
 ## Usage
 
