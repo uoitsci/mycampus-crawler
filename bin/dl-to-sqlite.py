@@ -13,7 +13,12 @@ from bs4 import BeautifulSoup, NavigableString
 import sqlite3
 from datetime import datetime
 
-YEARS = "07 08 09 10 11 12 13 14".split()
+YEARS = "07 08 09 10 11 12 13 14 15 16 17".split()
+
+def log(s=""):
+    sys.stderr.write(s + "\n")
+    sys.stderr.flush()
+
 
 def download(semester, subjs):
     all_subjs = [
@@ -82,33 +87,15 @@ def download(semester, subjs):
         &end_ap=a""" % (semester, subj)
 
     formdata = "".join([x.strip() for x in formdata.split("\n")]).strip()
+    text = None
 
+    log("Downloading from %s" % url)
     r = requests.post(url, data=formdata)
-    return BeautifulSoup(r.text, 'lxml')
+    text = r.text
 
-def next_sibling(el, name):
-    for x in el.next_siblings:
-        try:
-            if x.name == name:
-                return x
-        except:
-            pass
-    return None
+    log("Parsing using html5lib...")
+    return BeautifulSoup(text, 'html5lib')
 
-def TrList(th):
-    trlist = []
-    for x in th.next_siblings:
-        if not x:
-            break
-        try:
-            if x.name == 'th':
-                break
-            if x.name == 'tr':
-                trlist.append(x)
-        except:
-            pass
-
-    return trlist
 
 def Info(tr_list, ctx, db):
     #
@@ -317,23 +304,45 @@ def insert(db, ctx):
             cur.execute(sql, params)
             sys.stderr.write(".")
 
-def log(s=""):
-    sys.stderr.write(s + "\n")
-    sys.stderr.flush()
+#
+# yields lists of trs which are sections
+#
+class Section:
+    th = None
+    tr_list = None
+    def __init__(self, th):
+        self.th = th
+        self.tr_list = []
+
+def Section_TrLists(soup):
+    table = soup.find("table", class_="datadisplaytable")
+    section = None
+    for tr in table.find_all("tr"):
+        th = tr.find("th")
+        if th:
+            if section:
+                yield section
+            section = Section(th)
+        else:
+            if section:
+                section.tr_list.append(tr)
+    if section:
+        yield section
 
 def main(semester, db, subjs):
     ctx = Ctx()
     ctx.semester = semester
     start = time()
-    log("Downloading %s..." % semester)
+    log("Semester %s..." % semester)
     soup = download(semester, subjs)
     duration = time() - start
-    log("Download completed in %.2f seconds" % duration)
+    log("Data inquired in %.2f seconds" % duration)
 
     start = time()
-    for th in soup.find_all("th", class_="ddheader"):
-        Course(th, ctx, db)
-        tr_list = TrList(th)
+
+    for section in Section_TrLists(soup):
+        Course(section.th, ctx, db)
+        tr_list = section.tr_list
         
         #
         # General information
@@ -356,6 +365,7 @@ def main(semester, db, subjs):
     log(".")
     duration = time() - start
     log("Created database in %.2f seconds" % duration)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Mycampus Crawler")
