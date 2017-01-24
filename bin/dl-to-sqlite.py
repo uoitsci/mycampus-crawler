@@ -165,13 +165,14 @@ def Instructor(x):
 def Schedule(table, ctx, db):
     entries = list(table.find_all('td', class_='dbdefault'))
     while entries:
-        ctx.week    = Week(entries.pop(0))
-        ctx.type    = Type(entries.pop(0))
         ctx.time    = Time(entries.pop(0))
         ctx.days    = Days(entries.pop(0))
         ctx.where   = Where(entries.pop(0))
         ctx.date    = Date(entries.pop(0))
         ctx.schtype = SchType(entries.pop(0))
+        # removed since Jan 2017
+        # ctx.type    = Type(entries.pop(0))
+        # ctx.week    = Week(entries.pop(0))
         ctx.inst    = Instructor(entries.pop(0))
         insert(db, ctx)
 
@@ -219,7 +220,6 @@ def init_db(db):
             section     INTEGER,
             capacity    INTEGER,
             actual      INTEGER,
-            type        VARCHAR(30),
             starthour   INTEGER,
             startmin    INTEGER,
             endhour     INTEGER,
@@ -250,7 +250,6 @@ def insert(db, ctx):
     section = int(ctx.section)
     capacity = int(ctx.cap)
     actual = int(ctx.act)
-    type_ = ctx.type
     semester = ctx.semester
 
     starthour, startmin, endhour, endmin = None, None, None, None
@@ -285,7 +284,6 @@ def insert(db, ctx):
                 section,
                 capacity,
                 actual,
-                type_,
                 starthour,
                 startmin,
                 endhour,
