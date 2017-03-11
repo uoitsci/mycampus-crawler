@@ -4,10 +4,11 @@ import schedule
 from time import time
 import re
 import sqlite3
+import os
 
 app = Flask(__name__)
 
-dbname = "a.sqlite3"
+dbname = os.getenv("DBNAME", "/data/a.sqlite3")
 
 @app.route("/")
 def Index():
